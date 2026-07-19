@@ -95,7 +95,7 @@ class Product extends StatelessWidget{
   final VoidCallback onAddToCart; //This is to be able to update the shopping cart count
   final String image;
   const Product({super.key,required this.prod, required this.onAddToCart,required this.image});
-
+  @override
   Widget build(BuildContext context) {
     return Card(child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -116,8 +116,11 @@ class Product extends StatelessWidget{
             fit: BoxFit.cover,
           ),
         ),
+        const SizedBox(height: 10),
         Text(prod.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text('${prod.price} USD'),
+        Padding(
+          padding: const EdgeInsets.only(top: 10.0),
+          child: Text('${prod.price} USD'),),
         ElevatedButton(
           onPressed: onAddToCart, //when pressed the funtion will call in the _MyHomePage and increment the count
           child: const Text('Add to Cart'),
@@ -131,7 +134,7 @@ class item{ // To create an item list of the hard coded items
   final int price;
   const item({required this.name, required this.price});// curly braces to maintain order of constructor inputs to maintain safety and consistency
 }
-class ProductDetailPage extends StatelessWidget {
+/*class ProductDetailPage extends StatelessWidget {
   final item prod;
   final String image;
   final VoidCallback onAddToCart;
@@ -181,6 +184,110 @@ class ProductDetailPage extends StatelessWidget {
           onPressed: onAddToCart,
           child: const Text('Add to Cart'),
         ),),
+        ],
+      ),
+    );
+  }
+} */
+class ProductDetailPage extends StatefulWidget {
+  final item prod;
+  final String image;
+  final VoidCallback onAddToCart; // back to plain VoidCallback
+  const ProductDetailPage({
+    super.key,
+    required this.prod,
+    required this.image,
+    required this.onAddToCart,
+  });
+
+  @override
+  State<ProductDetailPage> createState() => _ProductDetailPageState();
+}
+
+class _ProductDetailPageState extends State<ProductDetailPage> {
+  String? selectedSize;
+
+  final List<String> sizes = ['40', '41', '42', '43', '44'];
+
+  @override
+  Widget build(BuildContext context) {
+    final details = [
+      'Brand: Nike',
+      'Price: ${widget.prod.price} USD',
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.prod.name),centerTitle: true),
+      body: Column(
+        children: [
+          Image.network(
+            widget.image,
+            width: double.infinity,
+            height: 220,
+            fit: BoxFit.cover,
+          ),
+
+          ListView.builder(               // no Expanded
+            shrinkWrap: true,             // size to content instead of filling space
+            physics: const NeverScrollableScrollPhysics(), // don't scroll independently
+            itemCount: details.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal:16.0, vertical: 8.0),
+                child: Text(details[index], style: const TextStyle(fontSize: 16)),
+              );
+            },
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Select size:',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: SizedBox(
+              height: 50,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: sizes.map((size) {
+                  final isSelected = selectedSize == size;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: ChoiceChip(
+                      label: Text(size),
+                      selected: isSelected,
+                      shape: const StadiumBorder(),
+                      onSelected: (selected) {
+                        setState(() {
+                          selectedSize = selected ? size : null;
+                        });
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: selectedSize == null
+                  ? null
+                  : () {
+                widget.onAddToCart(); // ✅ no arguments
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Added size $selectedSize to cart')),
+                );
+              },
+              child: const Text('Add to Cart'),
+            ),
+          ),
         ],
       ),
     );
