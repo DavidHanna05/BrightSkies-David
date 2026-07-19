@@ -29,18 +29,27 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _cartCount = 0;
-
-  void _addToCart() {
+  final List<item> _favorites = [];
+  void _addToCart(item i, String size) {
     setState(() {
-      _cartCount++;
+      _cartCount++; // or, once you build the cart page, add to _cartItems here instead
+    });
+  }
+  void _toggleFavorite(item i) {
+    setState(() {
+      if (_favorites.contains(i)) {
+        _favorites.remove(i);
+      } else {
+        _favorites.add(i);
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
 
-    final items= [const item(name:'Air Forces', price:125),
-      const item(name:'Air Maxes',price:200),
+    final items= [const item(name:'Air Forces', price:125, tag:'Best Seller'),
+      const item(name:'Air Maxes',price:200, discountPercent: 20),
       const item(name:'Air 97s',price:250),
       const item (name:'Travis', price: 1000)];
     return Scaffold(
@@ -83,116 +92,175 @@ class _MyHomePageState extends State<MyHomePage> {
         padding: const EdgeInsets.all(12.0),
         childAspectRatio: 0.6,
         children: [
-          Product(prod: items[0], onAddToCart: _addToCart,image:'https://images.unsplash.com/photo-1600269452121-4f2416e55c28?q=80&w=930&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)'),
-          Product(prod: items[1], onAddToCart: _addToCart,image:'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=1325&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'),
-          Product(prod: items[2], onAddToCart: _addToCart,image:'https://images.unsplash.com/photo-1556878882-55e3e222a1fc?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'),
-          Product(prod: items[3], onAddToCart: _addToCart,image:'https://images.unsplash.com/photo-1710668903629-9bfa9ae27968?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'),
+          Product(prod: items[0], onAddToCart: _addToCart,image:'https://images.unsplash.com/photo-1600269452121-4f2416e55c28?q=80&w=930&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)', isFavorited: _favorites.contains(items[0]),
+            onToggleFavorite: () => _toggleFavorite(items[0]),),
+          Product(prod: items[1], onAddToCart: _addToCart,image:'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=1325&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', isFavorited: _favorites.contains(items[1]),
+            onToggleFavorite: () => _toggleFavorite(items[1]),),
+          Product(prod: items[2], onAddToCart: _addToCart,image:'https://images.unsplash.com/photo-1556878882-55e3e222a1fc?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', isFavorited: _favorites.contains(items[2]),
+      onToggleFavorite: () => _toggleFavorite(items[2]),),
+          Product(prod: items[3], onAddToCart: _addToCart,image:'https://images.unsplash.com/photo-1710668903629-9bfa9ae27968?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', isFavorited: _favorites.contains(items[3]),
+            onToggleFavorite: () => _toggleFavorite(items[3]),),
         ],
       ),);}
   }
-class Product extends StatelessWidget{
+class Product extends StatefulWidget { // needs to become Stateful now
   final item prod;
-  final VoidCallback onAddToCart; //This is to be able to update the shopping cart count
+  final Function(item, String size) onAddToCart; // now needs the size passed along
   final String image;
-  const Product({super.key,required this.prod, required this.onAddToCart,required this.image});
+  final bool isFavorited;
+  final VoidCallback onToggleFavorite;
+
+  const Product({
+    super.key,
+    required this.prod,
+    required this.onAddToCart,
+    required this.image,
+    required this.isFavorited,
+    required this.onToggleFavorite,
+  });
+
+  @override
+  State<Product> createState() => _ProductState();
+}
+class _ProductState extends State<Product> {
+  String? selectedSize;
+  bool justAdded = false;
+  final List<String> sizes = ['40', '41', '42', '43', '44','45',];
+  void _handleAddToCart() {
+    widget.onAddToCart(widget.prod, selectedSize!);
+    setState(() {
+      justAdded = true;
+    });
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) { // see explanation below
+        setState(() {
+          justAdded = false;
+        });
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
-    return Card(child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProductDetailPage(prod: prod, image: image,onAddToCart: onAddToCart,),
+    return Card(
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductDetailPage(
+                        prod: widget.prod,
+                        image: widget.image,
+                        onAddToCart: widget.onAddToCart,
+                      ),
+                    ),
+                  );
+                },
+                child: Image.network(widget.image, width: double.infinity, height: 150, fit: BoxFit.cover),
               ),
-            );
-          },
-          child: Image.network(
-            image,
-            width: double.infinity,
-            height: 150,
-            fit: BoxFit.cover,
+              if (widget.prod.tag != null)
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(20)),
+                    child: Text(widget.prod.tag!, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  ),
+                )
+              else if (widget.prod.discountPercent != null)
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.orangeAccent, borderRadius: BorderRadius.circular(20)),
+                    child: Text('${widget.prod.discountPercent}% OFF', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  ),
+                ),
+              Positioned( // ← restored: this is the favorite icon, separate from the navigation logic
+                top: 10,
+                right: 10,
+                child: GestureDetector(
+                  onTap: widget.onToggleFavorite,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    child: Icon(
+                      widget.isFavorited ? Icons.favorite : Icons.favorite_border,
+                      size: 20,
+                      color: widget.isFavorited ? Colors.red : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(prod.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Padding(
-          padding: const EdgeInsets.only(top: 10.0),
-          child: Text('${prod.price} USD'),),
-        ElevatedButton(
-          onPressed: onAddToCart, //when pressed the funtion will call in the _MyHomePage and increment the count
-          child: const Text('Add to Cart'),
-        ),
-      ],
-    ),);
+          const SizedBox(height: 4),
+          Text(widget.prod.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            alignment: WrapAlignment.center,
+            children: sizes.map((size) {
+              return ChoiceChip(
+                label: Text(size, style: const TextStyle(fontSize: 11)),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                visualDensity: VisualDensity.compact, // keeps chips small on a crowded card
+                selected: selectedSize == size,
+                onSelected: (isSelected) {
+                  setState(() {
+                    selectedSize = isSelected ? size : null;
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 4),
+          if (widget.prod.discountPercent != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${widget.prod.price} USD',
+                  style: const TextStyle(decoration: TextDecoration.lineThrough, color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${(widget.prod.price * (100 - widget.prod.discountPercent!) / 100).round()} USD',
+                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ],
+            )
+          else
+            Text('${widget.prod.price} USD'),
+
+          ElevatedButton(
+            onPressed: (selectedSize == null || justAdded)
+                ? null // disabled while no size picked, OR while showing "Added"
+                : _handleAddToCart,
+            child: Text(justAdded ? 'Added' : 'Add to Cart'),
+          ),
+        ],
+      ),
+    );
   }
 }
 class item{ // To create an item list of the hard coded items
   final String name;
   final int price;
-  const item({required this.name, required this.price});// curly braces to maintain order of constructor inputs to maintain safety and consistency
+  final String? tag;
+  final int? discountPercent;
+  const item({required this.name, required this.price, this.tag,this.discountPercent,});
 }
-/*class ProductDetailPage extends StatelessWidget {
-  final item prod;
-  final String image;
-  final VoidCallback onAddToCart;
-  const ProductDetailPage({super.key, required this.prod, required this.image, required this.onAddToCart});
 
-  @override
-  Widget build(BuildContext context) {
-    // Mock detail data — swap for real info later
-    final details = [
-      'Brand: Nike',
-      'Type: ${prod.name}',
-      'Price: ${prod.price} USD',
-      'Available sizes: 40, 41, 42, 43, 44',
-    ];
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(prod.name),
-      ),
-      body: Column(
-        children: [
-          Image.network(
-            image,
-            width: double.infinity,
-            height: 220,
-            fit: BoxFit.cover,
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: details.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    details[index],
-                    style: const TextStyle(fontSize: 16),
-                  ),
-
-                );
-              },
-            ),
-          ),
-      Padding(
-        padding: const EdgeInsets.all(60.0),
-        child: ElevatedButton(
-          onPressed: onAddToCart,
-          child: const Text('Add to Cart'),
-        ),),
-        ],
-      ),
-    );
-  }
-} */
 class ProductDetailPage extends StatefulWidget {
   final item prod;
   final String image;
-  final VoidCallback onAddToCart; // back to plain VoidCallback
+  final Function(item, String size) onAddToCart;
   const ProductDetailPage({
     super.key,
     required this.prod,
@@ -280,7 +348,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               onPressed: selectedSize == null
                   ? null
                   : () {
-                widget.onAddToCart(); // ✅ no arguments
+                widget.onAddToCart(widget.prod, selectedSize!); // now passes its OWN selected size
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Added size $selectedSize to cart')),
                 );
