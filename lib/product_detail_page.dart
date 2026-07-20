@@ -1,15 +1,15 @@
-
 import 'package:flutter/material.dart';
+
 import 'item.dart';
+
 class ProductDetailPage extends StatefulWidget {
   final item prod;
-  final String image;
 
   final Function(item, String size) onAddToCart;
+
   const ProductDetailPage({
     super.key,
     required this.prod,
-    required this.image,
     required this.onAddToCart,
   });
 
@@ -25,7 +25,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   Widget build(BuildContext context) {
     final details = [
-      'Brand: Nike',
+      'Brand: ${widget.prod.brand}',
       'Price: ${widget.prod.price} USD',
     ];
 
@@ -34,52 +34,69 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       body: Column(
         children: [
           Image.network(
-            widget.image,
+            widget.prod.imageUrl,
             width: double.infinity,
             height: 220,
             fit: BoxFit.cover,
           ),
 
-          ListView.builder( // no Expanded
+          ListView.builder(
             shrinkWrap: true,
-            // size to content instead of filling space
+
             physics: const NeverScrollableScrollPhysics(),
-            // don't scroll independently
+
             itemCount: details.length,
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 8.0),
+                  horizontal: 16.0,
+                  vertical: 4.0,
+                ),
                 child: Text(
-                    details[index], style: const TextStyle(fontSize: 16)),
+                  details[index],
+                  style: const TextStyle(fontSize: 20),
+                ),
               );
             },
           ),
-          // Average rating — read only
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Row(
               children: [
                 ...List.generate(5, (index) {
+                  //el ... beymap el generated widgets fel row
                   return Icon(
-                    index < widget.prod.rating.round() ? Icons.star : Icons.star_border,
+                    index < widget.prod.rating.round()
+                        ? Icons.star
+                        : Icons.star_border,
                     color: Colors.amber,
-                    size: 20,
+                    size: 30,
                   );
                 }),
                 const SizedBox(width: 8),
-                Text('${widget.prod.rating.toStringAsFixed(1)} average'),
+                Text(
+                  '${widget.prod.rating.toStringAsFixed(1)} average',
+                  style: const TextStyle(fontSize: 16),
+                ),
               ],
             ),
           ),
 
-// User's own rating — tappable
+          // User's own rating — tappable
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0,vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Your rating:'),
+                Text(
+                  'Your rating:',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontSize: 20),
+                ),
                 Row(
                   children: List.generate(5, (index) {
                     return GestureDetector(
@@ -89,33 +106,36 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         });
                       },
                       child: Icon(
-                        index < (userRating ?? 0) ? Icons.star : Icons.star_border,
+                        index < (userRating ?? 0)
+                            ? Icons.star
+                            : Icons.star_border,
                         color: Colors.amber,
-                        size: 28,
+                        size: 30,
                       ),
                     );
                   }),
                 ),
                 if (userRating != null)
-                  Text('You rated this $userRating star${userRating == 1 ? '' : 's'}'),
+                  Text(
+                    'You rated this $userRating star${userRating == 1 ? '' : 's'}',
+                  ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0,vertical: 12),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'Select size:',
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .titleMedium,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontSize: 20),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(12.0),
             child: SizedBox(
               height: 50,
               child: ListView(
@@ -123,9 +143,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 children: sizes.map((size) {
                   final isSelected = selectedSize == size;
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
                     child: ChoiceChip(
-                      label: Text(size),
+                      label: Text(
+                        size,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       selected: isSelected,
                       shape: const StadiumBorder(),
                       onSelected: (selected) {
@@ -142,16 +168,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 30,
+                ),
+              ),
               onPressed: selectedSize == null
                   ? null
                   : () {
-                widget.onAddToCart(widget.prod,
-                    selectedSize!); // now passes its OWN selected size
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Added size $selectedSize to cart')),
-                );
-              },
-              child: const Text('Add to Cart'),
+                      widget.onAddToCart(
+                        widget.prod,
+                        selectedSize!,
+                      ); // now passes its OWN selected size
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Added size $selectedSize to cart'),
+                        ),
+                      );
+                    },
+              child: const Text(
+                'Add to Cart',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
